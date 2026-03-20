@@ -1,0 +1,8 @@
+ml_env/
+data/
+tmp_model/
+datatmp/
+__pycache__/
+*.pth
+*.pkl
+.DS_Store
