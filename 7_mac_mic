@@ -1,0 +1,37 @@
+import sounddevice as sd
+import numpy as np
+import live_system as ml_system
+import time
+
+DURATION = 3.0  # Exactly 3 second
+FS = 16000     # 16kHz
+
+def record_and_predict():
+    print("\n" + "="*30)
+    print("READY... (Stay quiet)")
+    time.sleep(0.5) # Let the background settle
+    
+    print("🔴 RECORDING... SAY 'FORWARD' NOW!")
+    # Record exactly 1 second
+    recording = sd.rec(int(DURATION * FS), samplerate=FS, channels=1, dtype='float32')
+    sd.wait()
+    
+    audio_data = recording.flatten()
+    
+    # Check if we actually heard something
+    volume = np.max(np.abs(audio_data))
+    if volume < 0.01:
+        print("⚠️ WARNING: Very quiet! Move closer to the mic.")
+    else:
+        print(f"✅ Captured (Volume: {volume:.2f}). Processing...")
+        ml_system.process_live_audio(audio_data)
+
+if __name__ == "__main__":
+    print("--- 1-Second Command Simulator ---")
+    try:
+        while True:
+            val = input("\nPress [ENTER] to start or 'q' to quit: ")
+            if val.lower() == 'q': break
+            record_and_predict()
+    except KeyboardInterrupt:
+        print("\nStopped.")
