@@ -1,0 +1,8 @@
+torch
+torchaudio
+numpy
+soundfile
+scikit-learn
+speechbrain
+pyserial
+sounddevice

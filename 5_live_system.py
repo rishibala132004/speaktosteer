@@ -46,23 +46,34 @@ cnn_model = SpeechCommandCNN(num_classes=7)
 cnn_model.load_state_dict(torch.load(MODEL_PATH, weights_only=True))
 cnn_model.eval()
 
-speaker_model = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb", savedir="tmp_model")
+speaker_model = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb", run_opts={"device": "cpu"})
 
 import soundfile as sf
-audio_array, _ = sf.read(ENROLLMENT_FILE)
-auth_waveform = torch.tensor(audio_array, dtype=torch.float32).unsqueeze(0)
-if auth_waveform.shape[0] > 1: auth_waveform = torch.mean(auth_waveform, dim=0, keepdim=True)
-AUTHORIZED_VOICE_PRINT = speaker_model.encode_batch(auth_waveform)
-print("Models Loaded and Voice Print Secured. System Ready.\n")
+import os
+
+AUTHORIZED_VOICE_PRINT = None
+if os.path.exists(ENROLLMENT_FILE):
+    audio_array, _ = sf.read(ENROLLMENT_FILE)
+    auth_waveform = torch.tensor(audio_array, dtype=torch.float32).unsqueeze(0)
+    if auth_waveform.shape[0] > 1: auth_waveform = torch.mean(auth_waveform, dim=0, keepdim=True)
+    AUTHORIZED_VOICE_PRINT = speaker_model.encode_batch(auth_waveform)
+    print("Models Loaded and Voice Print Secured. System Ready.\n")
+else:
+    print(f"WARNING: Enrollment file '{ENROLLMENT_FILE}' not found.")
+    print("Please run '6_voice_enrol.py' to create your voice enrollment.")
+    print("Running in demo mode without voice authentication.\n")
 
 
 def process_live_audio(live_audio_numpy_array):
     start_time = time.time()
     waveform = torch.tensor(live_audio_numpy_array, dtype=torch.float32).unsqueeze(0)
     
-    # 1. BIOMETRICS: SpeechBrain gets the full 3 seconds
-    incoming_voice_print = speaker_model.encode_batch(waveform)
-    similarity_score = torch.nn.functional.cosine_similarity(AUTHORIZED_VOICE_PRINT, incoming_voice_print, dim=2).item()
+    # 1. BIOMETRICS: SpeechBrain gets the full 3 seconds (only if enrollment exists)
+    if AUTHORIZED_VOICE_PRINT is not None:
+        incoming_voice_print = speaker_model.encode_batch(waveform)
+        similarity_score = torch.nn.functional.cosine_similarity(AUTHORIZED_VOICE_PRINT, incoming_voice_print, dim=2).item()
+    else:
+        similarity_score = 1.0  # Skip authentication if no enrollment
 
     # 2. SLIDING WINDOW: Find the loudest 1-second chunk
     if waveform.shape[1] > SAMPLE_RATE:
@@ -85,7 +96,11 @@ def process_live_audio(live_audio_numpy_array):
         predicted_command = TARGET_COMMANDS[predicted_idx.item()]
 
     latency_ms = (time.time() - start_time) * 1000
-    print(f"[{latency_ms:.0f}ms] Heard: '{predicted_command}' ({confidence:.1%}) | Match: {similarity_score:.1%}")
+    
+    if AUTHORIZED_VOICE_PRINT is not None:
+        print(f"[{latency_ms:.0f}ms] Heard: '{predicted_command}' ({confidence:.1%}) | Match: {similarity_score:.1%}")
+    else:
+        print(f"[{latency_ms:.0f}ms] Heard: '{predicted_command}' ({confidence:.1%}) [Demo Mode - No Voice Auth]")
     
     if similarity_score >= SPEAKER_MATCH_THRESHOLD and confidence.item() >= COMMAND_CONFIDENCE_THRESHOLD:
         command_map = {"forward": b'F', "backward": b'B', "left": b'L', "right": b'R', "stop": b'S'}

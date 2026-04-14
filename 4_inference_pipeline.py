@@ -75,7 +75,7 @@ def run_system(enrollment_file, incoming_command_file):
 
     # Load SpeechBrain (Downloads automatically the first time)
     print("2. Loading Speaker Verification Model (SpeechBrain)...")
-    speaker_model = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb", savedir="tmp_model")
+    speaker_model = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb", run_opts={"device": "cpu"})
 
     print("\n--- Processing Audio ---")
     # Step A: Create the "Voice Print" of the authorized user

@@ -58,7 +58,7 @@ cnn_model = SpeechCommandCNN(num_classes=7)
 cnn_model.load_state_dict(torch.load(MODEL_PATH, weights_only=True))
 cnn_model.eval()
 
-speaker_model = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb", savedir="tmp_model")
+speaker_model = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb", run_opts={"device": "cpu"})
 
 # Generate Authorized Voice Print once at startup
 import soundfile as sf

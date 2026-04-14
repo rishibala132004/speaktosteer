@@ -11,5 +11,6 @@ print("🔴 RECORDING...")
 recording = sd.rec(int(16000 * 1.5), samplerate=16000, channels=1, dtype='float32')
 sd.wait()
 
+
 sf.write('my_authorized_voice.wav', recording, 16000)
 print("✅ NEW MASTER KEY SAVED!")

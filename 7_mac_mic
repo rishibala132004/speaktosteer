@@ -3,7 +3,9 @@ import numpy as np
 import live_system as ml_system
 import time
 
+
 DURATION = 3.0  # Exactly 3 second
+
 FS = 16000     # 16kHz
 
 def record_and_predict():
