@@ -63,10 +63,6 @@ VAD_MIN_SPEECH_DURATION  = 0.3
 VAD_MAX_SPEECH_DURATION  = 5.0
 
 # ── Robot ──────────────────────────────────────────────────────────────────────
-ROBOT_PORT = '/dev/cu.YOUR_BLUETOOTH_PORT' 
-try:
-    robot_serial = serial.Serial(ROBOT_PORT, 9600, timeout=1)
-    time.sleep(2)
-except Exception:
-    robot_serial = None
+ROBOT_PORT = '/dev/rfcomm0'        # Pi Bluetooth serial
+VAD_ENERGY_THRESHOLD = 0.012
 ROBOT_BAUD = 9600
